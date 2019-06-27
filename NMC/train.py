@@ -13,7 +13,7 @@ FLAGS = tf.app.flags.FLAGS
 tf.flags.DEFINE_string("data_dir", "./Bio_Dataset/", "Data directory.")
 tf.flags.DEFINE_string("output_basedir", "./outputs/", "Directory for saving and loading model checkpoints.")
 tf.flags.DEFINE_string("pretrained_fname", "", "Name of the pretrained model checkpoints (to resume from)")
-tf.flags.DEFINE_string("output_dir", "", "Model output directory.")
+tf.flags.DEFINE_string("output_dir", "saved_model", "Model output directory.")
 tf.flags.DEFINE_string("output_matrix_dir", "./Experiment1/", "Output Matrix Directory")
 FLAGS.output_dir = FLAGS.output_basedir + 'snapshots/snapshot'
 
@@ -178,9 +178,9 @@ def main(unused_argv):
                     if not os.path.exists("./" + FLAGS.output_matrix_dir) :
                         os.mkdir("./" + FLAGS.output_matrix_dir)
 
-                    np.save("./" + FLAGS.output_matrix_dir + "/R_norm_complete_matrix" , R_norm_complete_matrix)
-                    np.save("./" + FLAGS.output_matrix_dir + "/recons_complete_matrix" , recons_complete_matrix)
-                    np.save("./" + FLAGS.output_matrix_dir + "/mask_complete_matrix" , mask_complete_matrix)
+                    #np.save("./" + FLAGS.output_matrix_dir + "/R_norm_complete_matrix" , R_norm_complete_matrix)
+                    #np.save("./" + FLAGS.output_matrix_dir + "/recons_complete_matrix" , recons_complete_matrix)
+                    #np.save("./" + FLAGS.output_matrix_dir + "/mask_complete_matrix" , mask_complete_matrix)
                 break
 
 

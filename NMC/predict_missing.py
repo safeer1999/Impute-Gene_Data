@@ -7,7 +7,7 @@ import configs.configs_ML100K as configs
 from model import NMC
 
 FLAGS = tf.app.flags.FLAGS
-tf.flags.DEFINE_string("data_dir", "./Bio_Dataset_test/", "Data directory.")
+tf.flags.DEFINE_string("data_file", "./Bio_Dataset_test/R.npz", "Data directory.")
 tf.flags.DEFINE_string("snapshot_dir", "./outputs/snapshots/", "Directory containing trained models.")
 cfgs = configs.CONFIGS
 embed_dim = int(cfgs.u_hidden_sizes.strip().split(',')[-1])
@@ -59,7 +59,7 @@ def reconstruct_cosine(latent_x, latent_y):
     return recons
 
 def RMSE_MAE(recon, ref, mask):
-    ind1, ind2 = np.nonzero(ref.multiply(mask))
+    ind1, ind2 = np.nonzero(np.multiply(ref,mask))
     ref_values = ref[ind1, ind2]
     values = recon[ind1, ind2]
     sum_sqr_diff = np.sum(np.square(values - ref_values))
@@ -74,15 +74,24 @@ def prepare_data(R, te_mask):
     R_ = R.copy()
     return X, R_
 
+
+def get_mask_from_dataset(R) :
+
+    mask = np.where(R == 0 , False, True)
+    mask_inverse = mask == False
+
+    return mask,mask_inverse
+
 def main(unused_argv):
     # load data
-    R = scipy.sparse.load_npz(FLAGS.data_dir + 'R.npz')
+    R = scipy.sparse.load_npz(FLAGS.data_file)
     val_set = np.unique(R.data)
     min_val = float(val_set[0]) 
     max_val = float(val_set[-1])
     #tr_mask = scipy.sparse.load_npz(FLAGS.data_dir + 'train_mask.npz')
     #val_mask = scipy.sparse.load_npz(FLAGS.data_dir + 'val_mask.npz')
-    te_mask = scipy.sparse.load_npz(FLAGS.data_dir + 'test_mask.npz')
+    te_mask,te_mask_inverse = get_mask_from_dataset(R.todense())
+    #print(te_mask)
     print('Finished loading data')
     #count = np.sum((tr_mask + val_mask).multiply(te_mask))
     #assert count == 0, 'Train and test overlap !!!'
@@ -110,12 +119,30 @@ def main(unused_argv):
     recons = reconstruct_cosine(lX, lY)
     recons = renormalize_minus_plus_one(recons, min_val, max_val)
     print('Finished completion')
+    R = np.asarray(R.todense())
     #rmse_tr, mae_tr = RMSE_MAE(recons, R_, tr_mask)
-    rmse_te, mae_te = RMSE_MAE(recons, R_, te_mask)
+    rmse_te, mae_te = RMSE_MAE(recons, np.asarray(R_.todense()), te_mask)
+
+
+    #print(type(recons))
+
+
+    #R_masked = np.multiply(R,te_mask)
+
+
+    imputed_set = np.add(np.multiply(R,te_mask) ,np.multiply(te_mask_inverse,recons))
+    print(R.shape)
+    print(te_mask.shape)
+    print(te_mask_inverse.shape)
+    print(recons.shape)
 
     print("Saving output")
     pd.DataFrame(X).to_csv('./imputed_values/orig.csv')
-    pd.DataFrame(recons).to_csv('./imputed_values/imputed.csv')
+    pd.DataFrame(recons).to_csv('./imputed_values/recons.csv')
+    pd.DataFrame(imputed_set).to_csv('./imputed_values/imputed_set.csv')
+    pd.DataFrame(imputed_set).to_csv('./imputed_values/imputed_set.csv')
+    pd.DataFrame(te_mask).to_csv('./imputed_values/mask.csv')
+
     
     print('-------------RESULT-------------')
     #print('Training')
@@ -123,6 +150,6 @@ def main(unused_argv):
     print('Testing')
     print('RMSE - MAE : %f - %f' %(rmse_te, mae_te))    
     print('--------------------------------')
-    
+                        
 if __name__ == '__main__':
     tf.app.run()

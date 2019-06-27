@@ -77,7 +77,11 @@ class NMC():
         self.sess = tf.Session(config=sess_config)
         init = tf.global_variables_initializer()
         self.sess.run(init)
-        self.saver = tf.train.Saver(max_to_keep=10)
+        if phase == 'train':
+	        self.saver = tf.train.Saver(max_to_keep=10)
+        
+        else :
+	        self.loader = None
 
         #TensorBoard Code
         self.writer = tf.summary.FileWriter("./NMC_graph",self.sess.graph)
@@ -243,7 +247,7 @@ class NMC():
         self.saver.save(self.sess, save_path, global_step=self.sess.run(self.global_step))
 
     def restore(self, save_path):
-        self.saver.restore(self.sess, save_path)
+        self.loader.restore(self.sess, save_path)
 
     def string_to_array(self, str, dtype='int'):
         arr = str.strip().split(',')
